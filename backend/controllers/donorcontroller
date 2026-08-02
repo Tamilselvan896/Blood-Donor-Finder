@@ -1,4 +1,4 @@
-const Donor = require("../models/Donor");
+const Donor = require("../models/donor");
 
 // GET /api/donors?bloodGroup=&city=&state=
 exports.getDonors = async (req, res) => {
