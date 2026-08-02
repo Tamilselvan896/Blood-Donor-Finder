@@ -1,0 +1,49 @@
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
+
+const getTokenFromHeader = (req) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    return authHeader.split(" ")[1];
+  }
+  return null;
+};
+
+// Blocks the request if there's no valid token (used for /profile)
+const protect = async (req, res, next) => {
+  const token = getTokenFromHeader(req);
+
+  if (!token) {
+    return res.status(401).json({ message: "Not authorized, no token provided." });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(401).json({ message: "User no longer exists." });
+    }
+    req.user = user;
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "Not authorized, invalid token." });
+  }
+};
+
+// Attaches req.user if a valid token is present, but never blocks the request
+// (used for POST /donors, which recipients can also submit while logged in)
+const optionalAuth = async (req, res, next) => {
+  const token = getTokenFromHeader(req);
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (user) req.user = user;
+  } catch (err) {
+    // Ignore invalid/expired tokens for optional auth
+  }
+  next();
+};
+
+module.exports = { protect, optionalAuth };

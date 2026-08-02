@@ -1,0 +1,24 @@
+const mongoose = require("mongoose");
+
+const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+const donorSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    name: { type: String, required: true, trim: true },
+    bloodGroup: { type: String, enum: BLOOD_GROUPS, required: true },
+    age: { type: Number, required: true, min: 16, max: 100 },
+    gender: { type: String, enum: ["Male", "Female", "Other"], required: true },
+    phone: { type: String, required: true, trim: true },
+    city: { type: String, required: true, trim: true },
+    state: { type: String, required: true, trim: true },
+    address: { type: String, required: true, trim: true },
+    availability: { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+
+// Speeds up the bloodGroup/city/state filters used by Find Donors
+donorSchema.index({ bloodGroup: 1, city: 1, state: 1 });
+
+module.exports = mongoose.model("Donor", donorSchema);
